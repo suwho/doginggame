@@ -1,0 +1,120 @@
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+import java.util.ArrayList;
+import java.util.Random;
+
+public class DodgingGame extends JPanel implements ActionListener, KeyListener {
+    private Timer timer;
+    private int playerX = 250;  // Player's initial horizontal position
+    private int playerY = 500;  // Player's vertical position (fixed)
+    private int playerSpeed = 15;  // Speed of player's movement
+
+    private ArrayList<Rectangle> fallingObjects;
+    private int objectWidth = 20;
+    private int objectHeight = 20;
+    private int objectSpeed = 5;
+
+    private int score = 0;
+    private boolean gameOver = false;
+
+    public DodgingGame() {
+        // Initialize game components
+        timer = new Timer(20, this);  // Timer for game loop
+        fallingObjects = new ArrayList<>();
+        addKeyListener(this);
+        setFocusable(true);
+        timer.start();  // Start game timer
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        if (!gameOver) {
+            // Move falling objects down
+            for (int i = 0; i < fallingObjects.size(); i++) {
+                Rectangle object = fallingObjects.get(i);
+                object.y += objectSpeed;
+
+                // Check for collision with player
+                if (object.intersects(new Rectangle(playerX, playerY, 40, 40))) {
+                    gameOver = true;
+                    timer.stop();
+                }
+
+                // Remove objects that go out of screen
+                if (object.y > getHeight()) {
+                    fallingObjects.remove(i);
+                    score++;
+                }
+            }
+
+            // Add new falling objects randomly
+            if (new Random().nextInt(20) == 0) {
+                int randomX = new Random().nextInt(getWidth() - objectWidth);
+                fallingObjects.add(new Rectangle(randomX, 0, objectWidth, objectHeight));
+            }
+
+            repaint();  // Repaint the screen
+        }
+    }
+
+    @Override
+    public void paintComponent(Graphics g) {
+        super.paintComponent(g);
+
+        if (gameOver) {
+            // Display Game Over screen
+            g.setFont(new Font("Arial", Font.BOLD, 50));
+            g.setColor(Color.RED);
+            g.drawString("Game Over", 150, 300);
+            g.setFont(new Font("Arial", Font.PLAIN, 30));
+            g.setColor(Color.BLACK);
+            g.drawString("Score: " + score, 230, 350);
+        } else {
+            // Draw player
+            g.setColor(Color.BLUE);
+            g.fillRect(playerX, playerY, 40, 40);  // Player square
+
+            // Draw falling objects
+            g.setColor(Color.RED);
+            for (Rectangle object : fallingObjects) {
+                g.fillRect(object.x, object.y, object.width, object.height);
+            }
+
+            // Display score
+            g.setFont(new Font("Arial", Font.PLAIN, 20));
+            g.setColor(Color.BLACK);
+            g.drawString("Score: " + score, 10, 20);
+        }
+    }
+
+    @Override
+    public void keyPressed(KeyEvent e) {
+        if (e.getKeyCode() == KeyEvent.VK_LEFT && playerX > 0) {
+            playerX -= playerSpeed;  // Move player left
+        }
+        if (e.getKeyCode() == KeyEvent.VK_RIGHT && playerX < getWidth() - 40) {
+            playerX += playerSpeed;  // Move player right
+        }
+    }
+
+    @Override
+    public void keyReleased(KeyEvent e) {
+    }
+
+    @Override
+    public void keyTyped(KeyEvent e) {
+    }
+
+    public static void main(String[] args) {
+        JFrame frame = new JFrame("Dodging Game");
+        DodgingGame game = new DodgingGame();
+        frame.add(game);
+        frame.setSize(600, 600);
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setVisible(true);
+    }
+}
